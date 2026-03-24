@@ -1,421 +1,1646 @@
 <!DOCTYPE html>
-
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Veeneeleo Web</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<!-- AWS SDK for Browser -->
+  <meta charset="utf-8" />
+  <title>BurnVinyl</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/aws-sdk/2.1488.0/aws-sdk.min.js"></script>
+    :root {
+      --paper: #faf7f2;
+      --paper-2: #f3eee6;
+      --paper-3: #ece4d8;
+      --ink: #1f1a17;
+      --ink-soft: #4b433d;
+      --ink-muted: #7a7169;
+      --accent-red: #a32222;
+      --accent-red-dark: #7d1717;
+      --accent-red-soft: #d6a5a5;
+      --border: #d5c9ba;
+      --border-strong: #b9aa98;
+      --success: #2f6b43;
+      --warning: #9a621d;
+      --danger: #a32222;
+      --shadow: 0 10px 28px rgba(46, 32, 20, 0.08);
+      --shadow-soft: 0 4px 12px rgba(46, 32, 20, 0.06);
+      --radius: 18px;
+    }
 
-<style>
-  :root {
-    --bg: #111;
-    --card: #1c1c1e;
-    --text: #f5f5f7;
-    --subtext: #a1a1a5;
-    --accent: #1db954;
-    --border: #2c2c2e;
-    --radius: 14px;
-  }
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      background:
+        radial-gradient(circle at top, rgba(163, 34, 34, 0.04), transparent 30%),
+        linear-gradient(180deg, #fcfaf7 0%, #f7f1e8 100%);
+      color: var(--ink);
+      min-height: 100vh;
+      padding-bottom: 80px;
+      overflow-x: hidden;
+    }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    margin: 0;
-    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
-    max-width: 480px;
-    margin-left: auto;
-    margin-right: auto;
-  }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.012) 0px,
+          rgba(0, 0, 0, 0.012) 1px,
+          transparent 1px,
+          transparent 3px
+        );
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-  h1 {
-    margin: 0 0 20px;
-    font-size: 28px;
-    text-align: center;
-    font-weight: 700;
-  }
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 10px 24px;
+    }
 
-  h2 {
-    margin-bottom: 12px;
-    font-size: 20px;
-    font-weight: 600;
-  }
+    header {
+      background: rgba(250, 247, 242, 0.92);
+      border: 1px solid rgba(185, 170, 152, 0.55);
+      border-bottom: 3px solid var(--accent-red);
+      box-shadow: var(--shadow-soft);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      margin: 10px 6px 18px;
+      border-radius: 0 0 18px 18px;
+      padding: 18px 20px 16px;
+    }
 
-  .card {
-    background: var(--card);
-    padding: 16px;
-    border-radius: var(--radius);
-    margin-bottom: 20px;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  }
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
 
-  input {
-    width: 100%;
-    padding: 14px;
-    border-radius: var(--radius);
-    font-size: 16px;
-    background: #2c2c2e;
-    color: var(--text);
-    border: 1px solid var(--border);
-    margin-top: 8px;
-    margin-bottom: 12px;
-  }
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      margin: 0;
+      line-height: 1;
+    }
 
-  input:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
+    .subtitle {
+      margin-top: 6px;
+      color: var(--ink-muted);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
 
-  button {
-    width: 100%;
-    padding: 14px;
-    border-radius: var(--radius);
-    font-size: 17px;
-    font-weight: 600;
-    border: none;
-    margin-top: 10px;
-    background: var(--accent);
-    color: #000;
-    cursor: pointer;
-    transition: opacity 0.2s;
-    -webkit-tap-highlight-color: transparent;
-  }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1.5px solid var(--border-strong);
+      background: var(--paper);
+      white-space: nowrap;
+    }
 
-  button.secondary {
-    background: #3a3a3c;
-    color: #fff;
-  }
+    .status-pill::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.9;
+    }
 
-  button:active {
-    opacity: 0.7;
-  }
+    .status-pill.ready {
+      color: var(--success);
+      border-color: rgba(47, 107, 67, 0.4);
+      background: rgba(47, 107, 67, 0.08);
+    }
 
-  ul {
-    padding: 0;
-    list-style: none;
-    margin: 0;
-  }
+    .status-pill.locked {
+      color: var(--warning);
+      border-color: rgba(154, 98, 29, 0.35);
+      background: rgba(154, 98, 29, 0.08);
+    }
 
-  li {
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-  }
+    .status-pill.disconnected {
+      color: var(--danger);
+      border-color: rgba(163, 34, 34, 0.25);
+      background: rgba(163, 34, 34, 0.07);
+    }
 
-  .track {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(247,241,232,0.88));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin: 14px 6px;
+      padding: 22px 20px;
+      box-shadow: var(--shadow);
+      animation: cardSlideIn 0.45s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
 
-  .track img {
-    width: 58px;
-    height: 58px;
-    border-radius: 10px;
-    object-fit: cover;
-  }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: linear-gradient(180deg, var(--accent-red), #c96b6b);
+      opacity: 0.95;
+    }
 
-  .small {
-    font-size: 13px;
-    color: var(--subtext);
-  }
+    @keyframes cardSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-  .row-actions {
-    margin-top: 10px;
-  }
+    .card h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      line-height: 1.1;
+    }
 
-  .row-actions button {
-    width: 100%;
-  }
-</style>
+    button {
+      font-family: 'IBM Plex Mono', monospace;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+      border: 1px solid transparent;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      box-shadow: 0 2px 6px rgba(60, 40, 30, 0.05);
+    }
 
+    button:active {
+      transform: translateY(1px) scale(0.985);
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, #b52a2a 0%, var(--accent-red) 100%);
+      color: #fffaf8;
+      border-color: #8f1e1e;
+      box-shadow: 0 6px 16px rgba(163, 34, 34, 0.22);
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background: linear-gradient(180deg, #c13232 0%, #962020 100%);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(180deg, #fffdfa 0%, #f0e9df 100%);
+      color: var(--ink);
+      border-color: var(--border-strong);
+    }
+
+    .btn-secondary:hover,
+    .btn-secondary:focus {
+      background: linear-gradient(180deg, #ffffff 0%, #ede4d8 100%);
+    }
+
+    .btn-success {
+      background: linear-gradient(180deg, #44785a 0%, var(--success) 100%);
+      color: #fdfcf9;
+      border-color: #2e5e3f;
+    }
+
+    .btn-danger {
+      background: linear-gradient(180deg, #bb3535 0%, var(--danger) 100%);
+      color: #fffaf8;
+      border-color: #8f1e1e;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .btn-row button {
+      flex: 1;
+      min-width: 100px;
+    }
+
+    input, select {
+      font-family: 'IBM Plex Mono', monospace;
+      width: 100%;
+      padding: 14px 15px;
+      background: rgba(255,255,255,0.7);
+      border: 1.5px solid var(--border-strong);
+      border-radius: 12px;
+      color: var(--ink);
+      font-size: 14px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      margin-top: 8px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-red);
+      box-shadow: 0 0 0 3px rgba(163, 34, 34, 0.10);
+      background: #fffdfb;
+    }
+
+    input::placeholder {
+      color: var(--ink-muted);
+    }
+
+    .search-wrapper {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-muted);
+      pointer-events: none;
+      margin-top: 4px;
+      font-size: 14px;
+    }
+
+    input[type="text"] {
+      padding-left: 42px;
+    }
+
+    .search-hint {
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-top: 8px;
+      min-height: 18px;
+    }
+
+    .results-list {
+      margin-top: 12px;
+    }
+
+    .track-item {
+      background: rgba(255,255,255,0.6);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      animation: trackSlideIn 0.35s ease-out;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .track-item:hover {
+      background: rgba(255,255,255,0.9);
+    }
+
+    @keyframes trackSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .track-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .track-name {
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .track-meta {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .track-item button {
+      flex-shrink: 0;
+      min-width: 88px;
+      padding: 10px 16px;
+    }
+
+    .duration-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: rgba(163, 34, 34, 0.08);
+      border: 1px solid rgba(163, 34, 34, 0.18);
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--accent-red);
+      font-weight: 700;
+    }
+
+    .warning-badge {
+      color: var(--warning);
+      border-color: rgba(154, 98, 29, 0.22);
+      background: rgba(154, 98, 29, 0.08);
+    }
+
+    .crate-counter {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+      padding: 13px 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(241,233,223,0.9));
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      min-width: 100%;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .counter-label {
+      font-size: 11px;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .counter-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent-red);
+      font-family: 'Cormorant Garamond', serif;
+      line-height: 1;
+    }
+
+    .selected-tracks {
+      list-style: none;
+      margin: 16px 0;
+    }
+
+    .selected-tracks li {
+      background: rgba(255,255,255,0.68);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent-red);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      animation: trackSlideIn 0.35s ease-out;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .track-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .track-controls button {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .download-container {
+      background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(244,236,228,0.95));
+      border: 1.5px solid rgba(163, 34, 34, 0.24);
+      border-radius: 14px;
+      padding: 20px;
+      margin: 16px 0;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .download-status {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--accent-red);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background: #e8ddd0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 8px;
+      border: 1px solid #d7c8b8;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #cf5b5b, var(--accent-red));
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    .download-message {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .log-container {
+      background: #fffdf9;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 11px;
+      color: var(--ink-soft);
+      margin-top: 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      line-height: 1.65;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .log-container::-webkit-scrollbar {
+      width: 7px;
+    }
+
+    .log-container::-webkit-scrollbar-track {
+      background: #f4ede4;
+      border-radius: 999px;
+    }
+
+    .log-container::-webkit-scrollbar-thumb {
+      background: #ccb9a5;
+      border-radius: 999px;
+    }
+
+    .collapsible-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      padding: 10px 0 2px;
+      margin-top: 6px;
+    }
+
+    .collapsible-header::after {
+      content: '▼';
+      font-size: 12px;
+      color: var(--ink-muted);
+      transition: transform 0.3s ease;
+    }
+
+    .collapsible-header.collapsed::after {
+      transform: rotate(-90deg);
+    }
+
+    .collapsible-content {
+      max-height: 2000px;
+      overflow: hidden;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+    }
+
+    .collapsible-content.collapsed {
+      max-height: 0;
+      opacity: 0;
+    }
+
+    .crate-list {
+      list-style: none;
+    }
+
+    .crate-list-item {
+      background: rgba(255,255,255,0.68);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      animation: trackSlideIn 0.35s ease-out;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .crate-header {
+      margin-bottom: 12px;
+    }
+
+    .crate-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    .crate-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #fffaf5;
+      border: 1px solid var(--border);
+      color: var(--ink-soft);
+    }
+
+    .badge-tracks {
+      color: var(--accent-red);
+      border-color: rgba(163, 34, 34, 0.18);
+    }
+
+    .badge-duration {
+      color: var(--ink);
+    }
+
+    .crate-date {
+      font-size: 11px;
+      color: var(--ink-muted);
+      margin-top: 8px;
+    }
+
+    .crate-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .crate-actions button {
+      flex: 1;
+      font-size: 12px;
+      padding: 10px 14px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 34px 20px;
+      color: var(--ink-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+      opacity: 0.55;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .mt-16 {
+      margin-top: 16px;
+    }
+
+    .mb-16 {
+      margin-bottom: 16px;
+    }
+
+    a {
+      color: var(--accent-red);
+      text-decoration: none;
+    }
+
+    a:hover,
+    a:focus {
+      text-decoration: underline;
+    }
+
+    .section-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(180deg, #be3a3a 0%, var(--accent-red) 100%);
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 13px;
+      color: #fffaf8;
+      margin-right: 10px;
+      box-shadow: 0 4px 10px rgba(163, 34, 34, 0.18);
+      flex-shrink: 0;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(255, 251, 246, 0.98);
+      border: 1.5px solid var(--border-strong);
+      border-left: 4px solid var(--accent-red);
+      border-radius: 14px;
+      padding: 16px 24px;
+      box-shadow: var(--shadow);
+      z-index: 1000;
+      opacity: 0;
+      color: var(--ink);
+      transition: all 0.25s ease;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast.error {
+      border-left-color: var(--danger);
+    }
+
+    .toast.success {
+      border-left-color: var(--success);
+    }
+
+    .network-option {
+      padding: 12px;
+      background: var(--paper);
+    }
+
+    .muted-text {
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-bottom: 16px;
+    }
+
+    .status-box {
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+    .status-box div {
+      color: var(--ink-soft);
+    }
+
+    .status-box span {
+      color: var(--accent-red);
+      font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 6px 24px;
+      }
+
+      .card {
+        margin: 12px 4px;
+        padding: 18px 16px;
+      }
+
+      header {
+        margin: 8px 4px 14px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .card h2 {
+        font-size: 24px;
+      }
+
+      .btn-row button {
+        min-width: 80px;
+        font-size: 12px;
+        padding: 10px 14px;
+      }
+
+      .header-row {
+        align-items: flex-start;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <header>
+      <div class="header-row">
+        <div>
+          <h1>BurnVinyl</h1>
+          <div class="subtitle">Analog crate builder</div>
+        </div>
+        <div id="vinylPill" class="status-pill disconnected">VINYL: NO LOCK</div>
+      </div>
+    </header>
 
-<h1>Veeneeleo Web</h1>
+    <!-- BLE Connection -->
+    <div class="card">
+      <h2><span class="section-number">1</span> Bluetooth Connection</h2>
 
-<!-- LOGIN -->
+      <div class="btn-row">
+        <button id="bleConnectBtn" class="btn-primary">Connect to Pi</button>
+        <button id="bleDisconnectBtn" class="btn-danger" disabled>Disconnect</button>
+      </div>
 
-<div id="login-box" class="card">
-    <h2>Login with Spotify</h2>
-    <button onclick="loginSpotify()">Login</button>
+      <div class="collapsible-header collapsed" id="bleAdvancedHeader">
+        <span style="color: var(--ink-muted); font-size: 12px; text-transform: uppercase;">Advanced Options</span>
+      </div>
 
-</div>
+      <div class="collapsible-content collapsed" id="bleAdvancedContent">
+        <select id="bleMode">
+          <option value="uuid" selected>Filter by UART UUID</option>
+          <option value="name">Filter by Name (DVS)</option>
+        </select>
 
-<!-- MAIN APP -->
+        <div class="btn-row">
+          <button id="statusBtn" class="btn-secondary" disabled>Check Status</button>
+          <button id="startPollBtn" class="btn-secondary" disabled>Start Poll</button>
+          <button id="stopPollBtn" class="btn-secondary" disabled>Stop Poll</button>
+        </div>
 
-<div id="app" style="display:none">
-
-```
-<!-- SEARCH -->
-<div class="card">
-    <h2>Search Spotify</h2>
-    <input id="search" placeholder="Search songs..." oninput="searchTracks()">
-    <ul id="results"></ul>
-</div>
-
-<!-- PLAYLIST -->
-<div class="card">
-    <h2>Current Playlist</h2>
-    <div>Total Duration: <span id="duration">0m 0s</span> / 15m max</div>
-    <ul id="playlist"></ul>
-
-    <div class="action-row">
-        <input id="title-input" placeholder="Playlist title">
-        <button onclick="savePlaylistToS3()">Upload to S3</button>
+        <div class="log-container" id="bleLog"></div>
+      </div>
     </div>
 
-    <button onclick="clearPlaylist()" style="margin-top:5px;background:#444;color:#fff;">Clear Playlist</button>
-</div>
-```
+    <!-- Wi-Fi -->
+    <div class="card">
+      <h2><span class="section-number">2</span> Wi-Fi Setup</h2>
 
-</div>
+      <p class="muted-text">
+        Connect your Pi to Wi-Fi for downloads. You can disable Wi-Fi during playback.
+      </p>
+
+      <div class="btn-row">
+        <button id="wifiScanBtn" class="btn-secondary" disabled>Scan Networks</button>
+        <button id="wifiStatusBtn" class="btn-secondary" disabled>Check Status</button>
+        <button id="wifiOffBtn" class="btn-danger" disabled>Turn Off</button>
+      </div>
+
+      <select id="wifiSsid" disabled>
+        <option value="">(scan for networks first)</option>
+      </select>
+
+      <input id="wifiPass" type="password" placeholder="Wi-Fi password (leave blank if open)" disabled />
+
+      <div class="btn-row">
+        <button id="wifiJoinBtn" class="btn-success" disabled>Connect to Network</button>
+      </div>
+
+      <div class="status-box">
+        <div>
+          Status: <span id="wifiState">unknown</span>
+        </div>
+        <div style="margin-top: 4px;">
+          IP: <span id="wifiIp">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="card">
+      <h2><span class="section-number">3</span> Search Music</h2>
+
+      <div class="search-wrapper">
+        <div class="search-icon">⌕</div>
+        <input id="searchBox" type="text" placeholder="Search for tracks on YouTube..." />
+      </div>
+      <div class="search-hint" id="searchHint">Type to search tracks</div>
+
+      <div class="crate-counter">
+        <div>
+          <div class="counter-label">Crate Limit</div>
+          <div style="font-size: 12px; color: var(--ink-muted); margin-top: 4px;">10:00 max</div>
+        </div>
+        <div style="margin-left: auto; text-align: right;">
+          <div class="counter-label">Current</div>
+          <div class="counter-value" id="crateDurLabel">0:00</div>
+        </div>
+      </div>
+
+      <div class="results-list" id="results"></div>
+    </div>
+
+    <!-- Download Progress -->
+    <div id="dlRow" class="card hidden">
+      <h2><span class="section-number">4</span> Download Progress</h2>
+
+      <div class="download-container">
+        <div class="download-status">Downloading: <span id="dlPct">0%</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="dlProg" style="width: 0%"></div>
+        </div>
+        <div class="download-message" id="dlMsg">Starting download...</div>
+      </div>
+    </div>
+
+    <!-- Current Crate -->
+    <div class="card">
+      <h2><span class="section-number">5</span> Current Playlist</h2>
+
+      <div class="crate-counter">
+        <div>
+          <div class="counter-label">Tracks</div>
+          <div class="counter-value" id="selectedCount">0</div>
+        </div>
+        <div style="margin-left: auto;">
+          <button id="clearSelectedBtn" class="btn-danger" style="padding: 8px 16px; font-size: 12px;">Clear All</button>
+        </div>
+      </div>
+
+      <ol class="selected-tracks" id="selected"></ol>
+
+      <input id="crateName" type="text" placeholder="Name your crate (e.g., Friday Night Set)" />
+
+      <div class="btn-row">
+        <button id="saveCrateBtn" class="btn-success">Save Crate</button>
+      </div>
+    </div>
+
+    <!-- Saved Crates -->
+    <div class="card">
+      <h2><span class="section-number">6</span> Your Crates</h2>
+
+      <p class="muted-text">
+        Saved locally on your device
+      </p>
+
+      <button id="refreshCratesBtn" class="btn-secondary" style="width: 100%; margin-bottom: 16px;">Refresh List</button>
+
+      <ul class="crate-list" id="crates"></ul>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 
 <script>
-/* ---------------------------------------------------
-   CONFIG VALUES — FILL THESE IN
---------------------------------------------------- */
+/* ======================== CHANGE ME (YouTube) ======================== */
+const YOUTUBE_API_KEY = "PASTE_YOUR_YOUTUBE_API_KEY_HERE";
+const CRATE_MAX_MS = 10 * 60 * 1000;
+/* ================================================================ */
 
-const SPOTIFY_CLIENT_ID = "81cff1fc219b442abfb47d9a3bba8960";
-const SPOTIFY_CLIENT_SECRET = "a4c929ba3a6242e68752e14ce2591c6a"; // Add your client secret
-const REDIRECT_URI = "https://veeneeleo.github.io/WebApp/";
-const S3_BUCKET = "veeneeleo-playlists-storage";
-const COGNITO_IDENTITY_POOL_ID = "us-east-2:d815e354-8912-4d75-8a24-43d9d31b4248";
+/* ======================== BLE Nordic UART UUIDs ======================== */
+const UART_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const UART_RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+const UART_TX_UUID      = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+/* ================================================================ */
 
-/* ---------------------------------------------------
-   SPOTIFY LOGIN
---------------------------------------------------- */
+const $ = (id) => document.getElementById(id);
 
-let accessToken = null;
-
-function loginSpotify() {
-    const params = new URLSearchParams({
-        client_id: SPOTIFY_CLIENT_ID,
-        response_type: "code",
-        redirect_uri: REDIRECT_URI,
-        scope: "playlist-read-private playlist-modify-private"
-    });
-
-    const url = "https://accounts.spotify.com/authorize?" + params.toString();
-    window.location.href = url;
+function logBle(msg) { 
+  const log = $("bleLog");
+  const entry = document.createElement('div');
+  entry.textContent = msg;
+  entry.style.animation = 'trackSlideIn 0.3s ease-out';
+  log.insertBefore(entry, log.firstChild);
 }
 
-window.onload = async function () {
-    // Check for authorization code
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
-    
-    if (code) {
-        await exchangeCodeForToken(code);
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
+function showToast(msg, type = 'info') {
+  const toast = $("toast");
+  toast.textContent = msg;
+  toast.className = `toast ${type}`;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function setVinylPill({ ready, lock }) {
+  const pill = $("vinylPill");
+  if (ready) {
+    pill.className = "status-pill ready";
+    pill.textContent = "VINYL: READY";
+  } else if (lock) {
+    pill.className = "status-pill locked";
+    pill.textContent = "VINYL: LOCKED";
+  } else {
+    pill.className = "status-pill disconnected";
+    pill.textContent = "VINYL: NO LOCK";
+  }
+}
+
+const enc = (s) => new TextEncoder().encode(s);
+const dec = (u8) => new TextDecoder().decode(u8);
+
+/* ======================== Download UI ======================== */
+function showDlUI(show) {
+  $("dlRow").classList.toggle('hidden', !show);
+}
+
+function setDlProgress(pct, msg) {
+  pct = Math.max(0, Math.min(100, (pct|0)));
+  $("dlProg").style.width = pct + "%";
+  $("dlPct").textContent = pct + "%";
+  $("dlMsg").textContent = msg || "";
+}
+/* ================================================================ */
+
+/* ======================== Local crate storage ======================== */
+const LS_KEY = "veeneeleo_crates_v1";
+function loadCrates() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }
+  catch { return []; }
+}
+function saveCrates(crates) {
+  localStorage.setItem(LS_KEY, JSON.stringify(crates));
+}
+/* ================================================================ */
+
+/* ======================== BLE ======================== */
+let ble = {
+  device: null,
+  server: null,
+  svc: null,
+  rx: null,
+  tx: null,
+  connected: false,
+  notifyBuf: "",
+  pollTimer: null,
+  lastStatus: {ready: false, lock: false, posMs: 0, rate: 1.0},
 };
 
-async function exchangeCodeForToken(code) {
-    const body = new URLSearchParams({
-        grant_type: "authorization_code",
-        code: code,
-        redirect_uri: REDIRECT_URI
-    });
+function setBleUi(connected) {
+  $("bleConnectBtn").disabled = connected;
+  $("bleDisconnectBtn").disabled = !connected;
+  $("statusBtn").disabled = !connected;
+  $("startPollBtn").disabled = !connected;
+  $("stopPollBtn").disabled = !connected;
 
-    const credentials = btoa(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET);
-
-    try {
-        const response = await fetch("https://accounts.spotify.com/api/token", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Authorization": "Basic " + credentials
-            },
-            body: body.toString()
-        });
-
-        const data = await response.json();
-        
-        if (data.access_token) {
-            accessToken = data.access_token;
-            document.getElementById("login-box").style.display = "none";
-            document.getElementById("app").style.display = "block";
-        } else {
-            alert("Failed to get access token");
-        }
-    } catch (error) {
-        alert("Error exchanging code for token: " + error.message);
-    }
+  $("wifiScanBtn").disabled = !connected;
+  $("wifiStatusBtn").disabled = !connected;
+  $("wifiOffBtn").disabled = !connected;
+  $("wifiSsid").disabled = !connected;
+  $("wifiPass").disabled = !connected;
+  $("wifiJoinBtn").disabled = !connected;
 }
 
-/* ---------------------------------------------------
-   SPOTIFY SEARCH
---------------------------------------------------- */
-
-let searchTimeout;
-
-function searchTracks() {
-    const q = document.getElementById("search").value.trim();
-    if (!q) {
-        document.getElementById("results").innerHTML = "";
-        return;
-    }
-
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => fetchTracks(q), 300);
+function safeAlertBleError(e) {
+  console.error("BLE error:", e);
+  const msg = e?.message || String(e);
+  showToast(`BLE Error: ${msg}`, 'error');
 }
 
-function fetchTracks(query) {
-    fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=5`, {
-        headers: { Authorization: "Bearer " + accessToken }
-    })
-    .then(res => res.json())
-    .then(data => {
-        const tracks = data.tracks.items;
-        document.getElementById("results").innerHTML = tracks.map(t => `
-            <li onclick='addTrack(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
-                <div class="track">
-                    <img src="${t.album.images[0]?.url}">
-                    <div>
-                        <b>${t.name}</b><br>
-                        ${t.artists[0].name}
-                    </div>
-                </div>
-            </li>
-        `).join("");
-    });
-}
+function onBleText(text) {
+  ble.notifyBuf += text;
+  let idx;
+  while((idx = ble.notifyBuf.indexOf("\n")) >= 0) {
+    const line = ble.notifyBuf.slice(0, idx).trim();
+    ble.notifyBuf = ble.notifyBuf.slice(idx + 1);
+    if(!line) continue;
 
-/* ---------------------------------------------------
-   PLAYLIST BUILDER
---------------------------------------------------- */
+    if (line.startsWith("READY ")) ble.lastStatus.ready = line.endsWith("1");
+    else if (line.startsWith("LOCK ")) ble.lastStatus.lock = line.endsWith("1");
+    else if (line.startsWith("POS_MS ")) ble.lastStatus.posMs = parseInt(line.slice(7), 10) || 0;
+    else if (line.startsWith("RATE ")) ble.lastStatus.rate = parseFloat(line.slice(5)) || 0;
+    else if (line === ".") setVinylPill({ ready: ble.lastStatus.ready, lock: ble.lastStatus.lock });
 
-let playlist = [];
-let totalDuration = 0;
-
-function addTrack(t) {
-    const durationSec = Math.floor(t.duration_ms / 1000);
-
-    if (totalDuration + durationSec > 900) {
-        alert("This exceeds the 15-minute playlist limit.");
-        return;
+    else if (line.startsWith("DL_PCT ")) {
+      showDlUI(true);
+      setDlProgress(parseInt(line.slice(7),10)||0, $("dlMsg").textContent);
+    } else if (line.startsWith("DL_MSG ")) {
+      showDlUI(true);
+      setDlProgress(parseInt($("dlProg").style.width)||0, line.slice(7));
+    } else if (line === "DL_DONE") {
+      setDlProgress(100, "Download complete!");
+      showToast("Download complete!", 'success');
+      setTimeout(()=>showDlUI(false), 2000);
+    } else if (line.startsWith("DL_ERR ")) {
+      showDlUI(true);
+      const err = line.slice(7);
+      setDlProgress(parseInt($("dlProg").style.width)||0, "Error: " + err);
+      showToast("Download failed: " + err, 'error');
     }
 
-    playlist.push({
-        title: t.name,
-        artist: t.artists[0].name,
-        albumName: t.album.name,
-        duration: durationSec,
-        spotifyURI: t.uri,
-        albumArtURL: t.album.images[0]?.url || ""
+    else if (line.startsWith("WIFI_NET ")) {
+      const payload = line.slice(9);
+      const [ssid, sig] = payload.split("|");
+      const signal = parseInt(sig||"0",10)||0;
+      if(ssid && ssid.trim()) {
+        const s = ssid.trim();
+        const i = wifiNets.findIndex(x=>x.ssid===s);
+        if(i>=0) wifiNets[i].signal = Math.max(wifiNets[i].signal, signal);
+        else wifiNets.push({ssid:s, signal});
+      }
+    } else if (line === "WIFI_SCAN_DONE") {
+      wifiNets.sort((a,b)=>b.signal-a.signal);
+      wifiRenderNets();
+      logBle("Wi-Fi scan complete");
+      showToast("Found " + wifiNets.length + " networks", 'success');
+    } else if (line.startsWith("WIFI_STATE ")) {
+      wifiSetState(line.slice(11).trim(), $("wifiIp").textContent === "-" ? "" : $("wifiIp").textContent);
+    } else if (line.startsWith("WIFI_IP ")) {
+      wifiSetState($("wifiState").textContent, line.slice(8).trim());
+    } else if (line.startsWith("WIFI_ERR ")) {
+      showToast("Wi-Fi error: " + line.slice(9), 'error');
+    }
+
+    logBle(line);
+  }
+}
+
+async function bleWriteLine(line) {
+  if(!ble.connected || !ble.rx) throw new Error("Not connected");
+  if(!line.endsWith("\n")) line += "\n";
+  const data = enc(line);
+
+  if (ble.rx.writeValue) await ble.rx.writeValue(data);
+  else await ble.rx.writeValueWithoutResponse(data);
+}
+
+function stopPoll() {
+  if(ble.pollTimer) clearInterval(ble.pollTimer);
+  ble.pollTimer = null;
+}
+
+async function statusOnce() {
+  await bleWriteLine("STATUS");
+}
+
+function startPoll() {
+  stopPoll();
+  ble.pollTimer = setInterval(()=>{
+    if(ble.connected) bleWriteLine("STATUS").catch(()=>{});
+  }, 300);
+  logBle("Polling status...");
+}
+
+function cleanupBleState() {
+  stopPoll();
+  ble.connected = false;
+  ble.server = null;
+  ble.svc = null;
+  ble.rx = null;
+  ble.tx = null;
+  setBleUi(false);
+  setVinylPill({ready: false, lock: false});
+  refreshCrates();
+}
+
+async function bleConnect() {
+  if(!window.isSecureContext) throw new Error("Must be HTTPS");
+  if(!navigator.bluetooth) throw new Error("WebBluetooth not available");
+
+  $("bleConnectBtn").disabled = true;
+
+  try {
+    logBle("Requesting device...");
+    showToast("Opening Bluetooth picker...", 'info');
+
+    const mode = $("bleMode").value;
+
+    if(mode === "name") {
+      ble.device = await navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: "DVS" }],
+        optionalServices: [UART_SERVICE_UUID],
+      });
+    } else {
+      ble.device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [UART_SERVICE_UUID] }],
+        optionalServices: [UART_SERVICE_UUID],
+      });
+    }
+
+    ble.device.addEventListener("gattserverdisconnected", ()=>{
+      logBle("GATT disconnected");
+      showToast("Bluetooth disconnected", 'error');
+      cleanupBleState();
     });
 
-    totalDuration += durationSec;
-    renderPlaylist();
-}
+    logBle("Connecting to GATT...");
+    ble.server = await ble.device.gatt.connect();
 
-function renderPlaylist() {
-    document.getElementById("duration").innerText =
-        `${Math.floor(totalDuration / 60)}m ${totalDuration % 60}s`;
+    logBle("Getting UART service...");
+    ble.svc = await ble.server.getPrimaryService(UART_SERVICE_UUID);
 
-    document.getElementById("playlist").innerHTML =
-        playlist.map((t, i) => `
-            <li>
-                <div class="track">
-                    <img src="${t.albumArtURL}">
-                    <div>
-                        <b>${t.title}</b><br>
-                        ${t.artist}<br>
-                        ${t.albumName}<br>
-                        ${Math.floor(t.duration/60)}m ${t.duration%60}s
-                    </div>
-                </div>
-                <button onclick="removeTrack(${i})" style="background:#444;color:white;margin-top:5px">Remove</button>
-            </li>
-        `).join("");
-}
+    logBle("Getting characteristics...");
+    ble.rx = await ble.svc.getCharacteristic(UART_RX_UUID);
+    ble.tx = await ble.svc.getCharacteristic(UART_TX_UUID);
 
-function removeTrack(i) {
-    totalDuration -= playlist[i].duration;
-    playlist.splice(i, 1);
-    renderPlaylist();
-}
+    logBle("Enabling notifications...");
+    await ble.tx.startNotifications();
 
-function clearPlaylist() {
-    playlist = [];
-    totalDuration = 0;
-    renderPlaylist();
-}
-
-/* ---------------------------------------------------
-   CSV GENERATION
---------------------------------------------------- */
-
-function buildCSV() {
-    let csv = "Order,Title,Artist,Album,Duration,SpotifyURI,AlbumArtURL\n";
-
-    playlist.forEach((t, i) => {
-        csv += `${i+1},"${t.title}","${t.artist}","${t.albumName}",${t.duration},"${t.spotifyURI}","${t.albumArtURL}"\n`;
+    ble.tx.addEventListener("characteristicvaluechanged", (ev)=>{
+      const v = ev.target.value;
+      const bytes = new Uint8Array(v.buffer);
+      onBleText(dec(bytes));
     });
 
-    return csv;
+    ble.connected = true;
+    setBleUi(true);
+    refreshCrates();
+    logBle("BLE connected");
+    showToast("Connected to Pi!", 'success');
+  } finally {
+    $("bleConnectBtn").disabled = ble.connected;
+  }
 }
 
-/* ---------------------------------------------------
-   AWS S3 UPLOAD (Cognito Unauthenticated)
---------------------------------------------------- */
+async function bleDisconnect() {
+  try {
+    stopPoll();
+    if(ble.device?.gatt?.connected) ble.device.gatt.disconnect();
+  } catch {}
+  cleanupBleState();
+  logBle("BLE disconnected");
+  showToast("Disconnected", 'info');
+}
+/* ================================================================ */
 
-// Configure AWS
-AWS.config.region = "us-east-2";
+/* ======================== Wi-Fi UI ======================== */
+let wifiNets = [];
 
-AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-    IdentityPoolId: COGNITO_IDENTITY_POOL_ID
-});
+function wifiRenderNets() {
+  const sel = $("wifiSsid");
+  sel.innerHTML = "";
+  if(!wifiNets.length) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "(no networks — tap Scan)";
+    sel.appendChild(opt);
+    return;
+  }
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = "(choose a network)";
+  sel.appendChild(opt0);
+  wifiNets.forEach(n=>{
+    const opt = document.createElement("option");
+    opt.value = n.ssid;
+    opt.textContent = `${n.ssid} (${n.signal}%)`;
+    sel.appendChild(opt);
+  });
+}
 
-const s3 = new AWS.S3({ apiVersion: "2006-03-01" });
+function wifiSetState(state, ip="") {
+  $("wifiState").textContent = state || "unknown";
+  $("wifiIp").textContent = ip || "-";
+}
 
-// Upload
-async function savePlaylistToS3() {
-    const title = document.getElementById("title-input").value.trim() || "Untitled";
-    const csv = buildCSV();
-    const filename = "11_playlist.csv";
+async function wifiScan() {
+  if(!ble.connected) return showToast("Connect to Pi first", 'error');
+  wifiNets = [];
+  wifiRenderNets();
+  wifiSetState("scanning","");
+  await bleWriteLine("WIFI_SCAN");
+  showToast("Scanning for networks...", 'info');
+}
 
-    // Ensure credentials are ready
-    await AWS.config.credentials.getPromise();
+async function wifiJoin() {
+  if(!ble.connected) return showToast("Connect to Pi first", 'error');
+  const ssid = $("wifiSsid").value;
+  const pwd = $("wifiPass").value;
+  if(!ssid) return showToast("Choose a network first", 'error');
+  wifiSetState("connecting","");
+  await bleWriteLine(`WIFI_JOIN ${ssid}|${pwd}`);
+  showToast("Connecting to " + ssid + "...", 'info');
+}
 
-    const params = {
-        Bucket: S3_BUCKET,
-        Key: "playlists/" + filename,
-        Body: csv,
-        ContentType: "text/csv"
+async function wifiStatus() {
+  if(!ble.connected) return showToast("Connect to Pi first", 'error');
+  await bleWriteLine("WIFI_STATUS");
+}
 
+async function wifiOff() {
+  if(!ble.connected) return showToast("Connect to Pi first", 'error');
+  await bleWriteLine("WIFI_OFF");
+  showToast("Turning Wi-Fi off...", 'info');
+}
+/* ================================================================ */
+
+/* ======================== YouTube API ======================== */
+async function youtubeSearch(query) {
+  if (!YOUTUBE_API_KEY || YOUTUBE_API_KEY.includes("YOUR_")) {
+    throw new Error("Set YOUTUBE_API_KEY first");
+  }
+
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=20&videoCategoryId=10&q=${encodeURIComponent(query + " music")}&key=${YOUTUBE_API_KEY}`;
+
+  const r = await fetch(url);
+  const data = await r.json();
+  if (!r.ok) throw new Error(JSON.stringify(data));
+  return data;
+}
+
+async function youtubeGetVideoDetails(videoIds) {
+  const url = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet&id=${videoIds}&key=${YOUTUBE_API_KEY}`;
+
+  const r = await fetch(url);
+  const data = await r.json();
+  if (!r.ok) throw new Error(JSON.stringify(data));
+  return data;
+}
+/* ================================================================ */
+
+/* ======================== Search & Crate ======================== */
+const selected = [];
+let lastSearchItems = [];
+let searchTimer = null;
+let lastQuery = "";
+let blurHideTimer = null;
+
+function fmtDur(ms) {
+  const s = Math.round(ms/1000);
+  const m = Math.floor(s/60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2,'0')}`;
+}
+
+function parseDuration(duration) {
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return 0;
+
+  const hours = parseInt(match[1] || 0);
+  const minutes = parseInt(match[2] || 0);
+  const seconds = parseInt(match[3] || 0);
+
+  return (hours * 3600 + minutes * 60 + seconds) * 1000;
+}
+
+function crateTotalMs() {
+  return selected.reduce((a,t)=>a+(t.duration_ms||0),0);
+}
+
+function updateCrateDurLabel() {
+  $("crateDurLabel").textContent = fmtDur(crateTotalMs());
+}
+
+function isAlreadySelected(id) {
+  return selected.some(t=>t.id===id);
+}
+
+function canAddTrack(t) {
+  if(!t) return false;
+  if(t.duration_ms > CRATE_MAX_MS) return false;
+  return (crateTotalMs()+t.duration_ms) <= CRATE_MAX_MS;
+}
+
+function renderSelected() {
+  $("selectedCount").textContent = String(selected.length);
+  updateCrateDurLabel();
+  const ol = $("selected");
+  ol.innerHTML = "";
+
+  if (selected.length === 0) {
+    ol.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎵</div><div>No tracks selected yet</div></div>';
+    return;
+  }
+
+  selected.forEach((t, idx)=>{
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div class="track-info">
+        <div class="track-name">${t.name}</div>
+        <div class="track-meta">
+          ${t.artist} • <span class="duration-badge">${fmtDur(t.duration_ms)}</span>
+        </div>
+      </div>
+      <div class="track-controls">
+        <button class="btn-secondary" data-act="up" ${idx===0?'disabled':''}>↑</button>
+        <button class="btn-secondary" data-act="down" ${idx===selected.length-1?'disabled':''}>↓</button>
+        <button class="btn-danger" data-act="remove">✕</button>
+      </div>
+    `;
+
+    li.querySelector('[data-act="up"]').onclick = ()=>{
+      if(idx===0) return;
+      [selected[idx-1], selected[idx]] = [selected[idx], selected[idx-1]];
+      renderSelected();
+      renderResults(lastSearchItems);
     };
 
-    s3.putObject(params, (err, data) => {
-        if (err) {
-            alert("Upload failed: " + err.message);
-            return;
+    li.querySelector('[data-act="down"]').onclick = ()=>{
+      if(idx===selected.length-1) return;
+      [selected[idx+1], selected[idx]] = [selected[idx], selected[idx+1]];
+      renderSelected();
+      renderResults(lastSearchItems);
+    };
+
+    li.querySelector('[data-act="remove"]').onclick = ()=>{
+      selected.splice(idx,1);
+      renderSelected();
+      renderResults(lastSearchItems);
+      showToast("Track removed", 'info');
+    };
+
+    ol.appendChild(li);
+  });
+}
+
+function clearResults() {
+  lastSearchItems = [];
+  $("results").innerHTML = "";
+}
+
+function renderResults(items) {
+  lastSearchItems = items || [];
+  const root = $("results");
+  root.innerHTML = "";
+  if(!items || !items.length) return;
+
+  const total = crateTotalMs();
+
+  items.forEach((t)=>{
+    const tooLong = t.duration_ms > CRATE_MAX_MS;
+    const already = isAlreadySelected(t.id);
+    const wouldExceed = !already && (total + t.duration_ms > CRATE_MAX_MS);
+
+    const div = document.createElement("div");
+    div.className = "track-item";
+
+    let meta = `${fmtDur(t.duration_ms)}`;
+    if (tooLong) meta += ' <span class="duration-badge warning-badge">(too long)</span>';
+    if (wouldExceed) meta += ' <span class="duration-badge warning-badge">(crate full)</span>';
+
+    div.innerHTML = `
+      <div class="track-info">
+        <div class="track-name">${t.name}</div>
+        <div class="track-meta">${t.artist} • ${meta}</div>
+      </div>
+      <button class="btn-primary" ${tooLong||already||wouldExceed ? "disabled":""}>
+        ${already ? "✓ Added" : (wouldExceed ? "Full" : "+ Add")}
+      </button>
+    `;
+
+    div.querySelector("button").onclick = ()=>{
+      if(tooLong || already) return;
+      if(!canAddTrack(t)) {
+        showToast("Crate limit is 10:00 total", 'error');
+        return;
+      }
+      selected.push(t);
+      renderSelected();
+      renderResults(items);
+      showToast("Track added!", 'success');
+    };
+
+    root.appendChild(div);
+  });
+}
+
+async function doSearchAuto(q) {
+  q = q.trim();
+  if(q.length < 2) {
+    $("searchHint").textContent = "Type at least 2 characters";
+    clearResults();
+    return;
+  }
+  if(q === lastQuery) return;
+  lastQuery = q;
+
+  $("searchHint").textContent = "Searching YouTube...";
+  try {
+    const searchData = await youtubeSearch(q);
+
+    if (!searchData.items || searchData.items.length === 0) {
+      $("searchHint").textContent = `No results for "${q}"`;
+      clearResults();
+      return;
+    }
+
+    const videoIds = searchData.items.map(item => item.id.videoId).join(',');
+    const detailsData = await youtubeGetVideoDetails(videoIds);
+
+    const items = detailsData.items.map(video => ({
+      id: video.id,
+      url: `https://www.youtube.com/watch?v=${video.id}`,
+      name: video.snippet.title,
+      artist: video.snippet.channelTitle,
+      duration_ms: parseDuration(video.contentDetails.duration),
+    }));
+
+    $("searchHint").textContent = `Found ${items.length} results for "${q}"`;
+    renderResults(items);
+  } catch(e) {
+    $("searchHint").textContent = "Search failed (check API key)";
+    console.error(e);
+    showToast("Search failed", 'error');
+  }
+}
+
+function onSearchInput() {
+  const q = $("searchBox").value;
+  if(searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(()=>doSearchAuto(q), 400);
+}
+
+function onSearchBlur() {
+  if(blurHideTimer) clearTimeout(blurHideTimer);
+  blurHideTimer = setTimeout(()=>{
+    clearResults();
+    $("searchHint").textContent = "";
+  }, 200);
+}
+
+function onSearchFocus() {
+  if(blurHideTimer) clearTimeout(blurHideTimer);
+  blurHideTimer = null;
+  $("searchHint").textContent = "Type to search tracks";
+}
+
+function saveCrate() {
+  const name = $("crateName").value.trim();
+  if(!name) return showToast("Enter a crate name", 'error');
+  if(!selected.length) return showToast("Add some tracks first", 'error');
+
+  const total = crateTotalMs();
+  if(total > CRATE_MAX_MS) return showToast("Crate exceeds 10:00 limit", 'error');
+
+  const crates = loadCrates();
+  crates.unshift({
+    id: crypto.randomUUID(),
+    name,
+    tracks: [...selected],
+    total_ms: total,
+    createdAt: Date.now(),
+  });
+  saveCrates(crates);
+
+  selected.length = 0;
+  renderSelected();
+  $("crateName").value = "";
+  refreshCrates();
+  showToast("Crate saved!", 'success');
+}
+
+function refreshCrates() {
+  const crates = loadCrates();
+  const ul = $("crates");
+  ul.innerHTML = "";
+
+  if (crates.length === 0) {
+    ul.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><div>No saved crates yet</div></div>';
+    return;
+  }
+
+  crates.forEach((c)=>{
+    const li = document.createElement("li");
+    li.className = "crate-list-item";
+    li.innerHTML = `
+      <div class="crate-header">
+        <div class="crate-title">${c.name}</div>
+        <div class="crate-badges">
+          <span class="badge badge-tracks">${c.tracks.length} tracks</span>
+          <span class="badge badge-duration">${fmtDur(c.total_ms || 0)}</span>
+        </div>
+        <div class="crate-date">${new Date(c.createdAt).toLocaleDateString()} ${new Date(c.createdAt).toLocaleTimeString()}</div>
+      </div>
+      <div class="crate-actions">
+        <button class="btn-success" data-act="send" ${ble.connected ? "" : "disabled"}>Burn Vinyl</button>
+        <button class="btn-secondary" data-act="load">Load</button>
+        <button class="btn-danger" data-act="del">Delete</button>
+      </div>
+    `;
+
+    li.querySelector('[data-act="send"]').onclick = async ()=>{
+      if(!ble.connected) return showToast("Connect to Pi first", 'error');
+
+      showDlUI(true);
+      setDlProgress(0, "Sending crate to Pi...");
+
+      const safe = (s)=>String(s||"").replace(/\|/g," ").replace(/\n/g," ").trim();
+
+      try {
+        await bleWriteLine(`CRATE_BEGIN ${safe(c.name)}`);
+        await bleWriteLine(`CRATE_TOTAL_MS ${c.total_ms || 0}`);
+        for(const t of c.tracks) {
+          await bleWriteLine(`CRATE_TRACK ${safe(t.id)}|${t.duration_ms||0}|${safe(t.url)}|${safe(t.name)}|${safe(t.artist)}`);
         }
+        await bleWriteLine("CRATE_END");
 
-        const url = `https://${S3_BUCKET}.s3.amazonaws.com/playlists/${filename}`;
-        alert("Uploaded Successfully!\n\n" + url);
+        setDlProgress(0, "Starting download...");
+        await bleWriteLine(`DL_START ${safe(c.name)}`);
+        showToast("Crate sent to Pi!", 'success');
+      } catch(e) {
+        showToast("Failed to send crate", 'error');
+        showDlUI(false);
+      }
+    };
 
-        clearPlaylist();
-        document.getElementById("title-input").value = "";
-    });
+    li.querySelector('[data-act="load"]').onclick = ()=>{
+      selected.length = 0;
+      c.tracks.forEach(t=>selected.push(t));
+      renderSelected();
+      $("crateName").value = c.name;
+      showToast("Crate loaded!", 'success');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    li.querySelector('[data-act="del"]').onclick = ()=>{
+      if(!confirm(`Delete crate "${c.name}"?`)) return;
+      saveCrates(crates.filter(x=>x.id!==c.id));
+      refreshCrates();
+      showToast("Crate deleted", 'info');
+    };
+
+    ul.appendChild(li);
+  });
 }
+/* ================================================================ */
 
-function buildSpotifyURL() {
-    const params = new URLSearchParams({
-        client_id: SPOTIFY_CLIENT_ID,
-        response_type: "code",
-        redirect_uri: REDIRECT_URI,
-        scope: "playlist-read-private playlist-modify-private"
-    });
+/* ======================== Collapsible sections ======================== */
+function setupCollapsible(headerId, contentId) {
+  const header = $(headerId);
+  const content = $(contentId);
 
-    return "https://accounts.spotify.com/authorize?" + params.toString();
+  header.onclick = ()=>{
+    content.classList.toggle('collapsed');
+    header.classList.toggle('collapsed');
+  };
 }
+/* ================================================================ */
 
+/* ======================== Wire UI ======================== */
+$("bleConnectBtn").onclick = async ()=>{
+  try { await bleConnect(); }
+  catch(e) {
+    safeAlertBleError(e);
+    cleanupBleState();
+    $("bleConnectBtn").disabled = false;
+  }
+};
+
+$("bleDisconnectBtn").onclick = ()=> bleDisconnect();
+
+$("statusBtn").onclick = ()=> statusOnce().catch(e=> safeAlertBleError(e));
+$("startPollBtn").onclick = ()=> startPoll();
+$("stopPollBtn").onclick = ()=> stopPoll();
+
+$("wifiScanBtn").onclick = ()=> wifiScan().catch(e=> safeAlertBleError(e));
+$("wifiJoinBtn").onclick = ()=> wifiJoin().catch(e=> safeAlertBleError(e));
+$("wifiStatusBtn").onclick = ()=> wifiStatus().catch(e=> safeAlertBleError(e));
+$("wifiOffBtn").onclick = ()=> wifiOff().catch(e=> safeAlertBleError(e));
+
+$("searchBox").addEventListener("input", onSearchInput);
+$("searchBox").addEventListener("blur", onSearchBlur);
+$("searchBox").addEventListener("focus", onSearchFocus);
+
+$("saveCrateBtn").onclick = ()=> saveCrate();
+$("refreshCratesBtn").onclick = ()=> refreshCrates();
+$("clearSelectedBtn").onclick = ()=>{
+  if (selected.length === 0) return;
+  if (!confirm("Clear all tracks from current playlist?")) return;
+  selected.length = 0;
+  renderSelected();
+  renderResults(lastSearchItems);
+  showToast("Playlist cleared", 'info');
+};
+/* ================================================================ */
+
+/* ======================== Boot ======================== */
+setBleUi(false);
+wifiRenderNets();
+renderSelected();
+refreshCrates();
+setupCollapsible('bleAdvancedHeader', 'bleAdvancedContent');
+
+(function boot() {
+  $("searchHint").textContent = "Type to search tracks";
+
+  const cards = document.querySelectorAll('.card');
+  cards.forEach((card, i) => {
+    card.style.animationDelay = `${i * 0.08}s`;
+  });
+})();
 </script>
-
 </body>
 </html>
